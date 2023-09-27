@@ -1,6 +1,7 @@
 name: CI/CD Workflow
 
 on:
+  push:
   workflow_dispatch:
 
 concurrency:
@@ -14,18 +15,21 @@ jobs:
       uses: actions/checkout@v2
 
   Check:
+    needs: Requirements
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
   Test:
+    needs: Check
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
   Build:
+    needs: Test
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
