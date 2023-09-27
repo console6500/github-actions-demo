@@ -55,7 +55,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4.1.0
+    - run: make deploy \
+            PLATFORM="GitHub Actions" \
+            FUNCTION=${{ vars.FUNCTION }} \
+            VERSION=${GITHUB_SHA} \
+            BUILD_NUMBER=${GITHUB_RUN_NUMBER}
 
+    - run: make testdeployment URL=${{ vars.URL }} VERSION=${GITHUB_SHA}
+    
   Production:
     needs: Staging
     environment: Production
