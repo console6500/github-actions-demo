@@ -1,4 +1,4 @@
-name: CI/CD Workflow
+name: Experimental Pipeline
 
 # This workflow is triggered on every push and can also be manually dispatched.
 on:
