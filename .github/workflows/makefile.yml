@@ -82,7 +82,7 @@ jobs:
             PLATFORM="GitHub Actions" \
             FUNCTION=${{ vars.FUNCTION_NAME }} \
             VERSION=${GITHUB_SHA} \
-            BUILD_NUMBER=${GITHUB_RUN_NUMBER}
+            BUILD_NUMBER="${GITHUB_RUN_NUMBER} / ${GITHUB_RUN_ID}"
 
     - name: Test 
       run: make testdeployment URL=${{ vars.URL }} VERSION=${GITHUB_SHA}
@@ -113,7 +113,7 @@ jobs:
             PLATFORM="GitHub Actions" \
             FUNCTION=${{ vars.FUNCTION_NAME }} \
             VERSION=${GITHUB_SHA} \
-            BUILD_NUMBER=${GITHUB_RUN_NUMBER}
+            BUILD_NUMBER="${GITHUB_RUN_NUMBER} / ${GITHUB_RUN_ID}"
 
     - name: Test 
       run: make testdeployment URL=${{ vars.URL }} VERSION=${GITHUB_SHA}
