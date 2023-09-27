@@ -45,8 +45,17 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4.1.0
-    - run: make build
+    
+    - name: Create the lambda.zip artifact
+      run: make build
 
+    - name: Archive lambda.zip artifact
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: lambda-artifact
+        path: ./lambda.zip
+        
   Staging:
     environment: Staging
     concurrency: Staging
@@ -62,14 +71,21 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ vars.AWS_DEFAULT_REGION }}
-        
-    - run: make deploy \
+    
+    - name: Retrieve lambda.zip
+      uses: actions/download-artifact@v3
+      with:
+        name: lambda-artifact
+    
+    - name: Deploy 
+      run: make deploy \
             PLATFORM="GitHub Actions" \
-            FUNCTION=${{ vars.FUNCTION }} \
+            FUNCTION=${{ vars.FUNCTION_NAME }} \
             VERSION=${GITHUB_SHA} \
             BUILD_NUMBER=${GITHUB_RUN_NUMBER}
 
-    - run: make testdeployment URL=${{ vars.URL }} VERSION=${GITHUB_SHA}
+    - name: Test 
+      run: make testdeployment URL=${{ vars.URL }} VERSION=${GITHUB_SHA}
     
   Production:
     needs: Staging
@@ -79,3 +95,25 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4.1.0
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+    
+    - name: Retrieve lambda.zip
+      uses: actions/download-artifact@v3
+      with:
+        name: lambda-artifact
+
+    - name: Deploy 
+      run: make deploy \
+            PLATFORM="GitHub Actions" \
+            FUNCTION=${{ vars.FUNCTION_NAME }} \
+            VERSION=${GITHUB_SHA} \
+            BUILD_NUMBER=${GITHUB_RUN_NUMBER}
+
+    - name: Test 
+      run: make testdeployment URL=${{ vars.URL }} VERSION=${GITHUB_SHA}
