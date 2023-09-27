@@ -3,74 +3,48 @@ name: CI/CD Workflow
 on:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+
 jobs:
-  build:
+  Requirements:
     runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: 'UPDATE_THIS_VALUE'
-      STAGING_FUNCTION_NAME: 'UPDATE_THIS_VALUE'
-      STAGING_URL: 'UPDATE_THIS_VALUE'
-      PRODUCTION_FUNCTION_NAME: 'UPDATE_THIS_VALUE'
-      PRODUCTION_URL: 'UPDATE_THIS_VALUE'
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+  Check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-    - name: Install Requirements
-      run: |
-        python3 -m venv local
-        . ./local/bin/activate
-        make requirements
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-    - name: Check: Lint
-      run: |
-        . ./local/bin/activate
-        make check lint
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-    - name: Check: Test
-      run: |
-        . ./local/bin/activate
-        make test
+  Staging:
+    environment: Staging
+    concurrency: Staging
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-    - name: Build
-      run: |
-        make build
-
-    - name: Deploy Staging
-      run: |
-        make deploy \
-            PLATFORM="GitHub Actions" \
-            FUNCTION=${STAGING_FUNCTION_NAME} \
-            VERSION=${GITHUB_SHA} \
-            BUILD_NUMBER=${GITHUB_RUN_NUMBER}
-
-    - name: Test Staging
-      run: |
-        make testdeployment URL=${STAGING_URL} VERSION=${GITHUB_SHA}
-
-    - name: Deploy Production
-      run: |
-        make deploy \
-            PLATFORM="GitHub Actions" \
-            FUNCTION=${PRODUCTION_FUNCTION_NAME} \
-            VERSION=${GITHUB_SHA} \
-            BUILD_NUMBER=${GITHUB_RUN_NUMBER}
-
-    - name: Test Production
-      run: |
-        make testdeployment URL=${PRODUCTION_URL} VERSION=${GITHUB_SHA}
-
-    - name: Archive lambda.zip as an artifact
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: lambda-artifact
-        path: lambda.zip
-
+  Production:
+    needs: Staging
+    environment: Production
+    concurrency: Production
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
